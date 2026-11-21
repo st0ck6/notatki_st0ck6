@@ -1,0 +1,1 @@
+# notatki_st0ck6
