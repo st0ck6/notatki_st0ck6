@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Moje Notatki</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #121212; color: #e0e0e0; line-height: 1.6; }
+    input { width: 100%; padding: 12px; margin-bottom: 20px; font-size: 16px; background: #1e1e1e; border: 1px solid #333; color: #fff; border-radius: 6px; box-sizing: border-box; }
+    .notatka { background: #1e1e1e; padding: 15px 20px; margin-bottom: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; }
+    h2 { margin-top: 0; font-size: 1.2em; color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <input type="text" id="szukaj" placeholder="Szukaj w notatkach..." onkeyup="filtruj()">
+  
+  <div class="notatka">
+    <h2>Przykładowa notatka 1</h2>
+    <p>Tutaj wpisz treść pierwszej notatki. Wyszukiwarka na górze od razu filtruje tekst.</p>
+  </div>
+
+  <div class="notatka">
+    <h2>Przykładowa notatka 2</h2>
+    <p>Kolejny blok tekstu lub schemat postępowania.</p>
+  </div>
+
+  <script>
+    function filtruj() {
+      let f = document.getElementById('szukaj').value.toLowerCase();
+      document.querySelectorAll('.notatka').forEach(el => {
+        el.style.display = el.innerText.toLowerCase().includes(f) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>
