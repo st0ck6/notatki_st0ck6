@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Ściągawka SOR</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 860px;
+      margin: 24px auto;
+      padding: 0 16px 60px 16px;
+      background: #121212;
+      color: #e4e4e7;
+      line-height: 1.55;
+    }
+    .top-bar {
+      position: sticky;
+      top: 0;
+      background: #121212;
+      padding: 12px 0 14px 0;
+      z-index: 20;
+      border-bottom: 1px solid #27272a;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 13px 16px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      background: #1e1e22;
+      border: 1px solid #3f3f46;
+      color: #fff;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .filtry {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filtr-btn {
+      background: #1e1e22;
+      color: #a1a1aa;
+      border: 1px solid #3f3f46;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filtr-btn:hover {
+      background: #27272a;
+      color: #fff;
+    }
+    .filtr-btn.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #3b82f6;
+      font-weight: 600;
+    }
+    .notatka {
+      background: #1c1c20;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      border-radius: 10px;
+      border-left: 4px solid #3b82f6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    /* Kolory paska bocznego dla kategorii */
+    .notatka[data-kat="leki"] { border-left-color: #3b82f6; }
+    .notatka[data-kat="wywiad"] { border-left-color: #10b981; }
+    .notatka[data-kat="badanie"] { border-left-color: #f59e0b; }
+    .notatka[data-kat="ortopedia"] { border-left-color: #a855f7; }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    h2 {
+      margin: 0;
+      font-size: 1.15em;
+      color: #60a5fa;
+    }
+    .notatka[data-kat="wywiad"] h2 { color: #34d399; }
+    .notatka[data-kat="badanie"] h2 { color: #fbbf24; }
+    .notatka[data-kat="ortopedia"] h2 { color: #c084fc; }
+
+    .copy-btn {
+      background: #27272a;
+      color: #e4e4e7;
+      border: 1px solid #3f3f46;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover {
+      background: #3f3f46;
+      color: #fff;
+    }
+    .copy-btn.copied {
+      background: #059669;
+      border-color: #10b981;
+      color: #fff;
+    }
+    .tresc {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #27272a;
+      white-space: pre-line;
+      font-size: 14.5px;
+      color: #d4d4d8;
+    }
+    .notatka.zwinieta .tresc {
+      display: none;
+    }
+
+    /* Klasy pomocnicze do formatowania */
+    b, strong { color: #ffffff; font-weight: 600; }
+    .duzy { font-size: 1.12em; font-weight: 600; color: #93c5fd; }
+    .uwaga { color: #f87171; font-weight: 600; }
+    mark { background: #fef08a; color: #121212; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
+    small { color: #a1a1aa; font-size: 0.88em; }
+    hr { border: 0; border-top: 1px dashed #3f3f46; margin: 12px 0; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <input type="text" id="szukaj" placeholder="Szukaj (np. kolano, urazowe, morfina, ciąża, KCl)..." onkeyup="filtruj()">
+    <div class="filtry">
+      <button class="filtr-btn active" onclick="ustawKategorie('wszystkie', this)">Wszystkie</button>
+      <button class="filtr-btn" onclick="ustawKategorie('leki', this)">Leki</button>
+      <button class="filtr-btn" onclick="ustawKategorie('wywiad', this)">Wywiad</button>
+      <button class="filtr-btn" onclick="ustawKategorie('badanie', this)">Badanie</button>
+      <button class="filtr-btn" onclick="ustawKategorie('ortopedia', this)">Ortopedia</button>
+    </div>
+  </div>
+
+  <!-- ================= LEKI ================= -->
+
+  <div class="notatka" data-kat="leki">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>Leczenie bólu</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc"><span class="duzy">Morfina</span> <small>10 mg/ml (amp. po 1 ml)</small>
+• <b>10 mg i.m.</b>
+• <b>2 mg i.v.</b> – <mark>siarczan morfiny !!</mark>
+<span class="uwaga">⚠ Kontrolować oddech i saturację</span>
+<hr><span class="duzy">Pyralgin</span> <small>500 mg/ml (amp. po 2 ml lub 5 ml)</small>
+• <b>1 g</b> Pyralgin + 250 ml 0,9% NaCl i.v.
+• <b>2,5 g</b> Pyralgin + 250 ml 0,9% NaCl i.v.
+<hr><span class="duzy">Paracetamol</span> <small>10 mg/ml (amp. po 100 ml)</small>
+• <b>1 g</b> Paracetamol i.v.</div>
+  </div>
+
+  <div class="notatka" data-kat="leki">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>Nadciśnienie tętnicze</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc"><span class="duzy">Nitrendypina</span> <small>20 mg</small>
+• <b>20 mg p.o.</b>
+<small>Dobrze dodać coś dłużej działającego np. Ramipryl</small>
+<hr><span class="duzy">Ramipryl</span> <small>5 mg</small>
+• <b>5 mg p.o.</b>
+<hr><span class="duzy">Urapidyl</span> <small>25 mg/5 ml</small>
+• 25 mg + 20 ml 0,9% NaCl = <b>1 mg / 1 ml roztworu</b>
+• Do zbicia ciśnienia miareczkować: <mark>zaczynać od 2 mg i.v.</mark></div>
+  </div>
+
+  <div class="notatka" data-kat="leki">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>Elektrolity (Potas)</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc"><span class="duzy">KCl</span> <small>150 mg/ml (amp. po 10 ml)</small>
+• 1500 mg = <b>20 mmol = 1 amp.</b> <small>(150 mg = 2 mmol)</small>
+• <span class="uwaga">Max. 20 mmol/h</span> (0,8–2 mmol/kg mc.)
+• 1500 mg KCl (1 amp.) + 500 ml 0,9% NaCl i.v. / h – na obwód podajemy w celu uzupełniania potasu</div>
+  </div>
+
+  <!-- ================= WYWIAD ================= -->
+
+  <div class="notatka" data-kat="wywiad">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>WYWIAD – Dorosły (SAMPLE)</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Pacjent/ka zgłosiła się do SOR samodzielnie z powodu
+Pacjent/ka przywieziony/a do SOR przez ZRM z powodu
+<b>S:</b> Pacjent/ka skarży się na
+<b>A:</b> Uczulenia neguje
+<b>M:</b> Leki przyjmowane na stałe: / Leków na stałe nie przyjmuje.
+<b>P:</b> W wywiadzie: / Bez obciążeń chorobowych
+<b>L:</b> Ostatni posiłek
+<b>E:</b> 
+Używki neguje
+Mieszka z rodziną / samodzielnie / bezdomny</div>
+  </div>
+
+  <div class="notatka" data-kat="wywiad">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>WYWIAD – Dziecko (SAMPLE)</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Dziecko lat ... pod opieką mamy/taty zgłosiło się na SOR z powodu:
+<b>S:</b> Pacjent/ka skarży się na
+<b>A:</b> Uczulenia neguje
+<b>M:</b> Leki przyjmowane na stałe: / Leków na stałe nie przyjmuje.
+<b>P:</b> W wywiadzie: / Bez obciążeń chorobowych
+<b>L:</b> Ostatni posiłek
+<b>E:</b> 
+Szczepiony/a zgodnie z kalendarzem szczepień.</div>
+  </div>
+
+  <div class="notatka" data-kat="wywiad">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>CIĄŻA – Wywiad i badanie pilne</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc"><b>CIĄŻA – WYWIAD:</b>
+Pacjentka kategorycznie neguje ciążę oraz możliwość jej występowania; podtrzymuje powyższą informację po poinformowaniu o planowanym badaniu obrazowym z użyciem promieniowania jonizującego.
+<hr><b>BADANIE PILNE:</b>
+Ze względu na stan kliniczny i pilne wskazania diagnostyczne badanie obrazowe wykonano bez oczekiwania na laboratoryjne potwierdzenie/wykluczenie ciąży.</div>
+  </div>
+
+  <!-- ================= BADANIE ================= -->
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE MIEJSCOWE</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Stan ogólny dobry. Przytomny, w pełnym kontakcie logicznym i słownym, zorientowany auto i allopsychicznie, GCS 15 pkt. Sat. O2 %, Temp. 36,6 st.C, BP mmHg.
+<b>Badanie miejscowe:</b> </div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE INTERNISTYCZNE (M)</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Stan ogólny dobry. Przytomny, w pełnym kontakcie logicznym i słownym, zorientowany auto i allopsychicznie, GCS 15 pkt.
+Skóra różowa, ciepła, sucha. Źrenice równe L=P, okrągłe, symetryczne, prawidłowo reagujące na światło. Bez oczopląsu. Objawy oponowe ujemne. Język podsychający, nie obłożony. Tylna ściana gardła bez widocznego nalotu.
+Akcja serca miarowa /min, tony serca czyste, głośne, tętno na obwodzie zgodne z akcją serca.
+Nad polami płucnymi osłuchowo szmer pęcherzykowy prawidłowy obustronnie.
+Brzuch miękki, niebolesny, bez ewidentnych oporów i objawów patologicznych. Objawy otrzewnowe ujemne. Objaw Chełmońskiego ujemny. Objaw Goldflam’a obustronnie ujemny. Perystaltyka jelit obecna, prawidłowa.
+Kończyny dolne prawidłowo ruchome. Ruchy czynne w pełnym zakresie. Bez ewidentnych obrzęków obwodowych.
+Bez ewidentnych świeżych zewnętrznych obrażeń ciała.
+<b>Parametry życiowe przy przyjęciu:</b> HR /min., BP mmHg, RR /min., SpO2 %, Temp. ciała *C.
+<b>EKG:</b> Rytm miarowy zatokowy o częstości /min., oś serca pośrednia, zapis bez uchwytnych zmian ST-T.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE INTERNISTYCZNE (K)</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Stan ogólny dobry. Przytomna, w pełnym kontakcie logicznym i słownym, zorientowana auto i allopsychicznie, GCS 15 pkt.
+Skóra różowa, ciepła, sucha. Źrenice równe L=P, okrągłe, symetryczne, prawidłowo reagujące na światło. Bez oczopląsu. Objawy oponowe ujemne. Język podsychający, nie obłożony. Tylna ściana gardła bez widocznego nalotu.
+Akcja serca miarowa /min, tony serca czyste, głośne, tętno na obwodzie zgodne z akcją serca. Nad polami płucnymi osłuchowo szmer pęcherzykowy prawidłowy obustronnie.
+Brzuch miękki, niebolesny, bez ewidentnych oporów i objawów patologicznych. Objawy otrzewnowe ujemne. Objaw Chełmońskiego ujemny. Objaw Goldflam’a obustronnie ujemny. Perystaltyka jelit obecna, prawidłowa.
+Kończyny dolne prawidłowo ruchome. Ruchy czynne w pełnym zakresie. Bez ewidentnych obrzęków obwodowych.
+Bez ewidentnych świeżych zewnętrznych obrażeń ciała.
+<b>Parametry życiowe przy przyjęciu:</b> HR /min., BP mmHg, RR /min., SpO2 %, Temp. ciała *C.
+<b>EKG:</b> Rytm miarowy zatokowy o częstości /min., oś serca pośrednia, zapis bez uchwytnych zmian ST-T.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE BRZUCHA PRAWIDŁOWE</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Brzuch symetryczny, niepowiększony, porusza się z oddechem. Perystaltyka obecna, prawidłowa. Opukowo odgłos jawny/bębenkowy, stłumienie wątrobowe zachowane.
+Palpacyjnie miękki, niebolesny we wszystkich kwadrantach, bez obrony mięśniowej i oporów patologicznych. Wątroba niepowiększona, niewyczuwalna poniżej prawego łuku żebrowego; śledziona niebadalna.
+Objawy otrzewnowe ujemne. Blumberg (-), Rovsing (-), Jaworski (-), Murphy (-), Chełmoński (-), Goldflam obustronnie (-). Okolice pachwinowe bez uchwytnych przepuklin.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE URAZOWE (M)</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Stan ogólny dość dobry, pacjent przytomny, logiczny, wydolny oddechowo i krążeniowo. GCS-15.
+<b>Głowa</b> – bez uchwytnych świeżych zewnętrznych obrażeń, czaszka symetryczna, opukowo niebolesna. Nie stwierdza się wycieku krwi z przewodów słuchowych oraz otworów nosowych obustronnie. Źrenice L=P, okrągłe, prawidłowo reagujące na światło. Wyrostki kolczyste w odcinku C kręgosłupa palpacyjnie niebolesne, objaw szczytowy ujemny.
+<b>Klatka piersiowa</b> – bez widocznych świeżych zewnętrznych obrażeń, w budowie symetryczna, palpacyjnie niebolesna. Osłuchowo szmer pęcherzykowy prawidłowy obustronnie. Akcja serca miarowa /min., tony serca czyste, głośne. Tętno na obwodzie zgodne z akcją serca.
+<b>Brzuch</b> – bez urazu, miękki, niebolesny. Bez wyczuwalnych ewidentnych oporów. Objawy otrzewnowe ujemne. Perystaltyka jelit zachowana prawidłowa.
+<b>Miednica</b> stabilna.
+<b>Kończyny górne i dolne</b> – bez widocznych zniekształceń zarysów kończyn, niebolesne podczas palpacji. Zachowana ruchomość czynna i bierna w stawach w pełnym zakresie. Tętno wyczuwalne na t. grzbietowej stopy obustronnie.
+Bez cech niedowładów. Napięcie mięśniowe symetryczne obustronnie. Próba Romberga ujemna. Próba palec-nos i pięta-kolano ujemna.
+<b>Parametry życiowe przy przyjęciu:</b> HR /min., BP mmHg, RR /min., SpO2 %, Temp. ciała *C.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE URAZOWE (K)</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Stan ogólny dość dobry, pacjentka przytomna, logiczna, wydolna oddechowo i krążeniowo. GCS 15 pkt.
+<b>Głowa</b> – bez uchwytnych świeżych zewnętrznych obrażeń, czaszka symetryczna, opukowo niebolesna. Nie stwierdza się wycieku krwi z przewodów słuchowych oraz otworów nosowych obustronnie. Źrenice L=P, okrągłe, prawidłowo reagujące na światło. Wyrostki kolczyste w odcinku C kręgosłupa palpacyjnie niebolesne, objaw szczytowy ujemny.
+<b>Klatka piersiowa</b> – bez widocznych świeżych zewnętrznych obrażeń, w budowie symetryczna, palpacyjnie niebolesna. Osłuchowo szmer pęcherzykowy prawidłowy obustronnie. Akcja serca miarowa, tony serca czyste, głośne. Tętno na obwodzie zgodne z akcją serca.
+<b>Brzuch</b> – bez urazu, miękki, niebolesny. Bez wyczuwalnych ewidentnych oporów. Objawy otrzewnowe ujemne. Perystaltyka jelit zachowana prawidłowa.
+<b>Miednica</b> stabilna.
+<b>Kończyny górne i dolne</b> – bez widocznych zniekształceń zarysów kończyn, niebolesne podczas palpacji. Zachowana ruchomość czynna i bierna w stawach w pełnym zakresie. Tętno wyczuwalne na t. grzbietowej stopy obustronnie.
+Bez cech niedowładów. Napięcie mięśniowe symetryczne obustronnie. Próba Romberga ujemna. Próba palec-nos i pięta-kolano ujemna.
+<b>Parametry życiowe przy przyjęciu:</b> HR /min., BP mmHg, RR /min., SpO2 %, Temp. ciała *C.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE URAZOWE (M) – SZYBKIE</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Stan ogólny średni, pacjent przytomny, logiczny, wydolny oddechowo i krążeniowo. GCS 15 pkt.
+<b>Głowa</b> – bez uchwytnych świeżych zewnętrznych obrażeń, czaszka symetryczna. Nie stwierdza się wycieku krwi z przewodów słuchowych oraz otworów nosowych obustronnie.
+<b>Klatka piersiowa</b> – bez widocznych świeżych zewnętrznych obrażeń, w budowie klatka symetryczna. Palpacyjnie stabilna. Osłuchowo szmer pęcherzykowy prawidłowy obustronnie. Akcja serca miarowa, tony serca czyste, głośne.
+<b>Brzuch</b> – miękki, bez oporów. Objawy otrzewnowe ujemne.
+<b>Miednica</b> stabilna.
+<b>Kończyny górne i dolne</b> – bez widocznych zniekształceń zarysów kończyn i obrażeń zewnętrznych.
+W badaniu źrenice L=P, okrągłe, prawidłowo reagujące na światło. Czucie na kończynach górnych i dolnych zachowane.
+<b>Parametry życiowe przy przyjęciu:</b> HR /min., BP mmHg, RR /min., SpO2 %, Temp. ciała *C.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE URAZOWE (K) – SZYBKIE</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Stan ogólny średni, pacjentka przytomna, logiczna, wydolna oddechowo i krążeniowo. GCS 15 pkt.
+<b>Głowa</b> – bez uchwytnych świeżych zewnętrznych obrażeń, czaszka symetryczna. Nie stwierdza się wycieku krwi z przewodów słuchowych oraz otworów nosowych obustronnie.
+<b>Klatka piersiowa</b> – bez widocznych świeżych zewnętrznych obrażeń, w budowie klatka symetryczna. Palpacyjnie stabilna. Osłuchowo szmer pęcherzykowy prawidłowy obustronnie. Akcja serca miarowa, tony serca czyste, głośne.
+<b>Brzuch</b> – miękki, bez oporów. Objawy otrzewnowe ujemne.
+<b>Miednica</b> stabilna.
+<b>K. górne i dolne</b> – bez widocznych zniekształceń zarysów kończyn i obrażeń zewnętrznych.
+W badaniu źrenice L=P, okrągłe, prawidłowo reagujące na światło. Czucie na kończynach górnych i dolnych zachowane.
+<b>Parametry życiowe przy przyjęciu:</b> HR /min., BP mmHg, RR /min., SpO2 %, Temp. ciała *C.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE JĄDRA</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Moszna symetryczna, skóra bez cech zaczerwienienia, obrzęku czy zmian zapalnych. Jądra prawidłowej wielkości, symetryczne, prawidłowo położone w mosznie, niebolesne, o gładkiej powierzchni i sprężystej konsystencji. Najądrza niepowiększone, niebolesne, bez wyczuwalnych zmian patologicznych. Powrózki nasienne symetryczne, bez cech poszerzenia naczyń żylnych. Nie stwierdza się cech wodniaka, żylaków powrózka nasiennego ani obecności patologicznych mas w obrębie moszny. Brak wycieku z cewki moczowej.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>BADANIE NEUROLOGICZNE + INTERNISTYCZNE</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">Stan ogólny dobry. Pacjent przytomny, w pełnym kontakcie logicznym i słownym, prawidłowo zorientowany auto- i allopsychicznie, GCS 15 pkt. Skóra różowa, ciepła, sucha.
+<b>Układ krążenia:</b> akcja serca miarowa /min, tony serca czyste, tętno obwodowe symetryczne.
+<b>Układ oddechowy:</b> RR /min, SpO₂ %, nad polami płucnymi szmer pęcherzykowy prawidłowy obustronnie, bez patologicznych szmerów dodatkowych.
+<b>Brzuch:</b> miękki, niebolesny palpacyjnie, bez wyczuwalnych oporów, objawy otrzewnowe ujemne, perystaltyka zachowana. Objaw Goldflama obustronnie ujemny.
+<b>Kończyny:</b> bez obrzęków obwodowych, ukrwienie prawidłowe.
+
+<b>Neurologicznie:</b> mowa płynna, bez cech afazji/dyzartrii. Źrenice L=P, okrągłe, prawidłowo reagujące na światło. Ruchomość gałek ocznych pełna, bez oczopląsu i diplopii. Mimika twarzy symetryczna. Język po wysunięciu w linii pośrodkowej. Siła mięśniowa kończyn górnych i dolnych 5/5, symetryczna, bez niedowładów. Czucie powierzchowne zachowane symetrycznie. Objaw Babińskiego obustronnie ujemny. Próba palec–nos oraz pięta–kolano prawidłowa. Próba Romberga ujemna. Chód prawidłowy. Objawy oponowe ujemne.
+
+<b>Parametry życiowe:</b> HR /min, BP mmHg, RR /min, SpO₂ %, Temp. °C.</div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ABCDE</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc"><b>A:</b> Drogi oddechowe drożne.
+<b>B:</b> Wydolny oddechowo. RR /min. Sat 100% (bez O2).
+<b>C:</b> Wydolny krążeniowo. HR /min., BP mmHg
+<b>D:</b> GCS=15. Pacjent przytomny, prawidłowo zorientowany allo- i autopsychicznie, w kontakcie logicznym. Źrenice równe. Siła mięśniowa symetryczna.
+<b>E:</b> </div>
+  </div>
+
+  <div class="notatka" data-kat="badanie">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ABG / VBG (Gazometria)</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">pH ; pCO₂ mmHg ; pO₂ mmHg ; HCO₃⁻ mmol/L ; BE mmol/L ; Lac mmol/L ; Na⁺ mmol/L ; K⁺ mmol/L ; Ca²⁺ mmol/L ; Glu mg/dL ; Hb g/dL ; FiO₂ %</div>
+  </div>
+
+  <!-- ================= ORTOPEDIA ================= -->
+
+  <div class="notatka" data-kat="ortopedia">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ORTOPEDIA – Staw skokowy</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">W badaniu fizykalnym prawego/lewego stawu skokowo-goleniowego: obrzęk okolicy kostki bocznej / przyśrodkowej. Ruchomość czynna i bierna stawu skokowo-goleniowego zachowana / ograniczona bólowo. Bolesność samoistna oraz palpacyjna w okolicy kostki bocznej / przyśrodkowej. Okolica podstawy V kości śródstopia i kości łódkowatej niebolesna. Pacjent zdolny / niezdolny do wykonania 4 kroków z obciążeniem kończyny. Staw zwarty, stabilny. Ukrwienie i unerwienie obwodu kończyny zachowane, prawidłowe.</div>
+  </div>
+
+  <div class="notatka" data-kat="ortopedia">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ORTOPEDIA – Kolano</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">W badaniu fizykalnym prawego / lewego stawu kolanowego: skóra nad stawem prawidłowej barwy i ucieplenia, bez widocznych otarć naskórka. Obrzęk stawu, tkliwość palpacyjna okolicy przedziału przedniego / przyśrodkowego / bocznego stawu. Staw zwarty, stabilny. Bólowe ograniczenie ruchomości czynnej i biernej – zgięcie x stopni, wyprost x stopni. Test balotowania rzepki ujemny / dodatni. Objawy łąkotkowe: ujemne / dodatnie. Test koślawienia i szpotawienia ujemny / dodatni. Test szuflady przedniej i tylnej ujemny / dodatni. Objaw Lachmana nieobecny. Ukrwienie i unerwienie obwodu kończyny zachowane.</div>
+  </div>
+
+  <div class="notatka" data-kat="ortopedia">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ORTOPEDIA – Nadgarstek</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">W badaniu fizykalnym prawego / lewego nadgarstka: obrzęk, zniekształcenie obrysu stawu, otarcie naskórka okolicy x. Tkliwość palpacyjna stawu / dalszej części przedramienia. Bólowe ograniczenie ruchomości czynnej i biernej – zgięcie x stopni, wyprost x stopni. Tabakierka anatomiczna niebolesna / bolesna palpacyjnie. Ukrwienie i unerwienie obwodu kończyny zachowane.</div>
+  </div>
+
+  <div class="notatka" data-kat="ortopedia">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ORTOPEDIA – Kręgosłup</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">W badaniu fizykalnym: ból i tkliwość palpacyjna okolicy C / Th / L-S kręgosłupa. Opukiwanie wyrostków kolczystych kręgosłupa C / Th / L-S bolesne / niebolesne. Czucie i siła mięśniowa tułowia i kończyn górnych i dolnych zachowana. Czucie okolicy krocza i napięcie zwieraczy w normie. Objaw szczytowy ujemny. Objawy korzeniowe Lasegue’a i Mackiewicza ujemne.</div>
+  </div>
+
+  <div class="notatka" data-kat="ortopedia">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ORTOPEDIA – Łokieć</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">W badaniu fizykalnym prawego / lewego łokcia: obrzęk, zniekształcenie obrysu stawu, otarcie naskórka okolicy x. Tkliwość palpacyjna stawu. Bólowe ograniczenie ruchomości czynnej i biernej – zgięcie x stopni, wyprost x stopni. Ruchy rotacyjne przedramienia bolesne. Ukrwienie i unerwienie obwodu kończyny zachowane.</div>
+  </div>
+
+  <div class="notatka" data-kat="ortopedia">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ORTOPEDIA – Bark</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">W badaniu fizykalnym prawego / lewego stawu ramienno-łopatkowego: obrzęk i tkliwość palpacyjna stawu. Bólowe ograniczenie ruchomości czynnej i biernej – odwiedzenie x stopni, zgięcie x stopni, wyprost x stopni. Ruchy rotacyjne ramienia bolesne. Staw zwarty, stabilny. Test szuflady ujemny. Testy na uszkodzenie ścięgien stożka rotatorów ujemne. Ukrwienie i unerwienie obwodu kończyny zachowane.</div>
+  </div>
+
+  <div class="notatka" data-kat="ortopedia">
+    <div class="card-header" onclick="zwin(this)">
+      <h2>ORTOPEDIA – Zwichnięty bark</h2>
+      <button class="copy-btn" onclick="kopiuj(event, this)">Kopiuj</button>
+    </div>
+    <div class="tresc">W badaniu fizykalnym prawego/lewego stawu ramienno-łopatkowego: widoczne zniekształcenie obrysu stawu, silne bólowe ograniczenie ruchomości czynnej i biernej. Głowa kości ramiennej wyczuwalna poza anatomicznym położeniem. Ukrwienie obwodowe prawidłowe, czucie i ruchomość dystalnie zachowane; czucie w zakresie n. pachowego zachowane.</div>
+  </div>
+
+  <script>
+    let aktywnaKategoria = 'wszystkie';
+
+    function ustawKategorie(kat, btn) {
+      aktywnaKategoria = kat;
+      document.querySelectorAll('.filtr-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filtruj();
+    }
+
+    function filtruj() {
+      let f = document.getElementById('szukaj').value.toLowerCase();
+      document.querySelectorAll('.notatka').forEach(el => {
+        let pasujeTekst = el.innerText.toLowerCase().includes(f);
+        let pasujeKat = (aktywnaKategoria === 'wszystkie') || (el.dataset.kat === aktywnaKategoria);
+        el.style.display = (pasujeTekst && pasujeKat) ? '' : 'none';
+      });
+    }
+
+    function zwin(header) {
+      header.parentElement.classList.toggle('zwinieta');
+    }
+
+    function kopiuj(event, btn) {
+      event.stopPropagation(); // Zapobiega zwinięciu karty przy kliknięciu Kopiuj
+      const tekst = btn.closest('.notatka').querySelector('.tresc').innerText;
+      navigator.clipboard.writeText(tekst).then(() => {
+        const oryginalny = btn.innerText;
+        btn.innerText = 'Skopiowano ✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = oryginalny;
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>
